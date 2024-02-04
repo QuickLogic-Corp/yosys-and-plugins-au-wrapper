@@ -1,0 +1,9 @@
+[submodule "yosys"]
+	path = yosys
+	url = https://github.com/YosysHQ/yosys.git
+[submodule "yosys-f4pga-plugins-chipalliance"]
+	path = yosys-f4pga-plugins-chipalliance
+	url = https://github.com/chipsalliance/yosys-f4pga-plugins.git
+[submodule "yosys-f4pga-plugins-quicklogic"]
+	path = yosys-f4pga-plugins-quicklogic
+	url = https://github.com/QuickLogic-Corp/yosys-f4pga-plugins.git

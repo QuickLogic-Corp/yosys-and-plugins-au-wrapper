@@ -1,0 +1,178 @@
+name: 'build'
+
+on:
+  push:
+
+jobs:
+
+  build-msys2:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - msystem: mingw64
+            env: x86_64
+            runner: windows-2022
+          - msystem: ucrt64
+            env: ucrt-x86_64
+            runner: windows-2022
+          - msystem: clang64
+            env: clang-x86_64
+            runner: windows-2022
+
+    runs-on: ${{ matrix.runner }}
+
+    defaults:
+      run:
+        shell: msys2 {0}
+        #shell: C:\msys64\msys2_shell.cmd -mingw64 -defterm -here -no-start {0}
+
+    steps:
+
+    - name: Cancel Previous
+      uses: styfle/cancel-workflow-action@0.12.1
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Checkout Repo
+      uses: actions/checkout@v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Setup MSYS2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.msystem }}
+        path-type: minimal
+        update: true
+        release: false
+        install: >-
+          base-devel
+          git
+          wget
+          mingw-w64-${{ matrix.env }}-toolchain
+          mingw-w64-${{ matrix.env }}-cmake
+          mingw-w64-${{ matrix.env }}-tcl
+          mingw-w64-${{ matrix.env }}-zlib
+          mingw-w64-${{ matrix.env }}-swig
+
+    - name: Setup Python
+      uses: actions/setup-python@v4.3.0
+      with:
+        python-version: 3.8
+        architecture: x64
+
+    - name: Print Python Path
+      run: |
+        echo ${{ env.pythonLocation }}
+        echo ${{ env.Python_ROOT_DIR }}
+        echo ${{ env.Python3_ROOT_DIR }}
+
+    - name: Show Shell Configuration
+      run: |
+        which git && git --version || true
+        which cmake && cmake --version || true
+        which make && make --version || true
+        which python && python --version || true
+        which ninja && ninja --version || true
+        which tclsh && echo 'puts [info patchlevel];exit 0' | tclsh || true
+
+    - name: Print Compiler Info
+      run: |
+        printf "\n"
+        printf "$(which gcc)\n"
+        printf "$(gcc -v)\n"
+        printf "\n"
+        printf "$(which g++)\n"
+        printf "$(g++ -v)\n"
+        printf "\n"
+        printf "$(which ld)\n"
+        printf "$(ld -v)\n"
+
+    - name: Dump GitHub Context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Print Repo HEAD
+      run: |
+        echo && echo "git last log" && git log -1
+
+    # https://sourceforge.net/p/mingw/mailman/message/5690922/
+    # https://github.com/capnproto/capnproto/issues/1458
+    - name: Build
+      run: |
+        make install -j$(nproc)
+
+
+  build-linux:
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-20.04
+            install_script: install_dependencies_build_ubuntu2004.sh
+          - runner: ubuntu-22.04
+            install_script: install_dependencies_build_ubuntu2204.sh
+
+    runs-on: ${{ matrix.runner }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+
+    - name: Cancel previous
+      uses: styfle/cancel-workflow-action@0.12.1
+      with:
+        access_token: ${{ github.token }}
+
+    - name: Checkout Repo
+      uses: actions/checkout@v4.1.1
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Install Dependencies
+      run: |
+        sudo bash ./.github/workflows/${{ matrix.install_script }}
+
+    - name: Show Shell Configuration
+      run: |
+        which git && git --version || true
+        which cmake && cmake --version || true
+        which make && make --version || true
+        which python && python --version || true
+        which ninja && ninja --version || true
+        which tclsh && echo 'puts [info patchlevel];exit 0' | tclsh || true
+
+    - name: Print Compiler Info
+      run: |
+        printf "\n"
+        printf "$(which gcc)\n"
+        printf "$(gcc -v)\n"
+        printf "\n"
+        printf "$(which g++)\n"
+        printf "$(g++ -v)\n"
+        printf "\n"
+        printf "$(which ld)\n"
+        printf "$(ld -v)\n"
+
+    - name: Dump GitHub Context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: echo "$GITHUB_CONTEXT"
+
+    - name: Print Repo HEAD
+      run: |
+        echo && echo "git last log" && git log -1
+
+    # https://sourceforge.net/p/mingw/mailman/message/5690922/
+    # https://github.com/capnproto/capnproto/issues/1458
+    - name: Build
+      run: |
+        make install -j$(nproc)
