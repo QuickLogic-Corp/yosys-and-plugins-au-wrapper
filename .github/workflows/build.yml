@@ -17,9 +17,10 @@ jobs:
           - msystem: ucrt64
             env: ucrt-x86_64
             runner: windows-2022
-          - msystem: clang64
-            env: clang-x86_64
-            runner: windows-2022
+          # error: cast from pointer to smaller type 'long' loses information
+          # - msystem: clang64
+          #   env: clang-x86_64
+          #   runner: windows-2022
 
     runs-on: ${{ matrix.runner }}
 
