@@ -66,9 +66,8 @@ jobs:
 
     - name: Print Python Path
       run: |
-        echo ${{ env.pythonLocation }}
-        echo ${{ env.Python_ROOT_DIR }}
-        echo ${{ env.Python3_ROOT_DIR }}
+        echo $(cygpath -u "${{ env.pythonLocation }}")
+        ls $(cygpath -u "${{ env.pythonLocation }}")
 
     - name: Show Shell Configuration
       run: |
